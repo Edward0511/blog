@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Hexo</title>
+  
+  
+  <link href="http://example.com/atom.xml" rel="self"/>
+  
+  <link href="http://example.com/"/>
+  <updated>2022-08-13T15:34:56.037Z</updated>
+  <id>http://example.com/</id>
+  
+  <author>
+    <name>John Doe</name>
+    
+  </author>
+  
+  <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title></title>
+    <link href="http://example.com/2022/08/13/Docker-Install%20-squId/"/>
+    <id>http://example.com/2022/08/13/Docker-Install%20-squId/</id>
+    <published>2022-08-13T15:25:57.444Z</published>
+    <updated>2022-08-13T15:34:56.037Z</updated>
+    
+    <content type="html"><![CDATA[<p>代理服务对我们做研发的人员的重要性，大家都懂的，这里仅供大家参考使用，请使用的时候遵循相关的国家法律法规，勿用于非法用途。</p><p>我们这里使用的代理服务器搭建软件是squid<br> 我们先拉取一下squid的镜像</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker pull sameersbn&#x2F;squid</span><br></pre></td></tr></table></figure><p>然后用这个镜像起一个容器</p><figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run --name squid -d --restart=always --publish <span class="number">7777</span>:<span class="number">7777</span> --volume /srv/docker/squid/cache:/<span class="keyword">var</span>/spool/squid3 sameersbn/squid</span><br></pre></td></tr></table></figure><p>安装密码访问组件</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">yum -y install httpd <span class="comment">#centos</span></span><br><span class="line">apt install apache2-utils <span class="comment">#Ubuntu</span></span><br></pre></td></tr></table></figure><p>设置访问密码</p><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 生成认证文件</span></span><br><span class="line">sudo htpasswd -c squid_passwd patago <span class="comment">#your-username</span></span><br><span class="line"><span class="comment">## 在这里输入两次密码</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 将认证文件拷贝至容器</span></span><br><span class="line">sudo docker cp squid_passwd squid:/etc/squid/</span><br></pre></td></tr></table></figure><p>编写配置文件</p><figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line">acl localnet src <span class="number">10.0</span>.<span class="number">0.0</span>/<span class="number">8</span>    <span class="comment"># RFC1918 possible internal network</span></span><br><span class="line">acl localnet src <span class="number">172.16</span>.<span class="number">0.0</span>/<span class="number">12</span>    <span class="comment"># RFC1918 possible internal network</span></span><br><span class="line">acl localnet src <span class="number">192.168</span>.<span class="number">0.0</span>/<span class="number">16</span>    <span class="comment"># RFC1918 possible internal network</span></span><br><span class="line">acl localnet src fc00::/<span class="number">7</span>       <span class="comment"># RFC 4193 local private network range</span></span><br><span class="line">acl localnet src fe80::/<span class="number">10</span>      <span class="comment"># RFC 4291 link-local (directly plugged) machines</span></span><br><span class="line">acl localnet src <span class="number">0.0</span>.<span class="number">0.0</span>/<span class="number">0.0</span>.<span class="number">0.0</span></span><br><span class="line">acl localnet src <span class="number">0.0</span>.<span class="number">0.0</span>/<span class="number">8</span></span><br><span class="line"></span><br><span class="line">acl SSL_ports port <span class="number">443</span></span><br><span class="line">acl Safe_ports port <span class="number">80</span>        <span class="comment"># http</span></span><br><span class="line">acl Safe_ports port <span class="number">21</span>        <span class="comment"># ftp</span></span><br><span class="line">acl Safe_ports port <span class="number">443</span>        <span class="comment"># https</span></span><br><span class="line">acl Safe_ports port <span class="number">70</span>        <span class="comment"># gopher</span></span><br><span class="line">acl Safe_ports port <span class="number">210</span>        <span class="comment"># wais</span></span><br><span class="line">acl Safe_ports port <span class="number">1025</span>-<span class="number">65535</span>    <span class="comment"># unregistered ports</span></span><br><span class="line">acl Safe_ports port <span class="number">280</span>        <span class="comment"># http-mgmt</span></span><br><span class="line">acl Safe_ports port <span class="number">488</span>        <span class="comment"># gss-http</span></span><br><span class="line">acl Safe_ports port <span class="number">591</span>        <span class="comment"># filemaker</span></span><br><span class="line">acl Safe_ports port <span class="number">777</span>        <span class="comment"># multiling http</span></span><br><span class="line">acl CONNECT method CONNECT</span><br><span class="line"></span><br><span class="line"><span class="comment"># username&amp;password auth config</span></span><br><span class="line">auth_param basic program /usr/lib/squid3/basic_ncsa_auth /etc/squid3/squid_passwd</span><br><span class="line">acl ncsa_users proxy_auth REQUIRED</span><br><span class="line">http_access allow ncsa_users</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">http_access deny !Safe_ports</span><br><span class="line">http_access deny CONNECT !SSL_ports</span><br><span class="line">http_access allow localhost manager</span><br><span class="line">http_access deny manager</span><br><span class="line">http_access deny to_localhost</span><br><span class="line">http_access allow localnet</span><br><span class="line">http_access allow localhost</span><br><span class="line">http_access deny all</span><br><span class="line">http_port <span class="number">3128</span></span><br><span class="line"></span><br><span class="line">cache_dir ufs /var/spool/squid3 <span class="number">100</span> <span class="number">16</span> <span class="number">256</span></span><br><span class="line">coredump_dir /var/spool/squid3</span><br><span class="line"></span><br><span class="line">refresh_pattern ^<span class="symbol">ftp:</span>        <span class="number">1440</span>    <span class="number">20</span>%    <span class="number">10080</span></span><br><span class="line">refresh_pattern ^<span class="symbol">gopher:</span>    <span class="number">1440</span>    <span class="number">0</span>%    <span class="number">1440</span></span><br><span class="line">refresh_pattern -i (<span class="regexp">/cgi-bin/</span><span class="params">|\?) 0    0%    0</span></span><br><span class="line"><span class="params">refresh_pattern (Release|</span>Packages(.gz)*)<span class="variable">$ </span>     <span class="number">0</span>       <span class="number">20</span>%     <span class="number">2880</span></span><br><span class="line">refresh_pattern .        <span class="number">0</span>    <span class="number">20</span>%    <span class="number">4320</span></span><br></pre></td></tr></table></figure><p>复制配置到容器中</p><figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker cp squid.conf squid:<span class="regexp">/etc/</span>squid/squid.conf</span><br></pre></td></tr></table></figure><p>重启容器</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo docker restart squid</span><br></pre></td></tr></table></figure><p>现在可以开始使用你自己的代理啦</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;p&gt;代理服务对我们做研发的人员的重要性，大家都懂的，这里仅供大家参考使用，请使用的时候遵循相关的国家法律法规，勿用于非法用途。&lt;/p&gt;
+&lt;p&gt;我们这里使用的代理服务器搭建软件是squid&lt;br&gt; 我们先拉取一下squid的镜像&lt;/p&gt;
+&lt;figure class=&quot;highli</summary>
+      
+    
+    
+    
+    
+  </entry>
+  
+  <entry>
+    <title>frp Install</title>
+    <link href="http://example.com/2021/02/05/frp-Install/"/>
+    <id>http://example.com/2021/02/05/frp-Install/</id>
+    <published>2021-02-05T14:37:38.000Z</published>
+    <updated>2021-02-10T07:47:03.684Z</updated>
+    
+    <content type="html"><![CDATA[<p>下载地址：<br><a href="https://github.com/fatedier/frp/releases">https://github.com/fatedier/frp/releases</a></p><p>新建目录<br>mkdir -p /usr/local/frp</p><p>wget <a href="https://github.com/fatedier/frp/releases/download/v0.35.1/frp_0.35.1_linux_amd64.tar.gz">https://github.com/fatedier/frp/releases/download/v0.35.1/frp_0.35.1_linux_amd64.tar.gz</a></p><p>tar -zxvf frp_0.35.1_linux_amd64.tar.gz</p><p>编辑frps.ini文件：</p><p>[common]<br>bind_addr = 0.0.0.0<br>bind_port = 7000    （数据传输端口，需要服务端客户端一致）<br>privilege_token = 2fd165jtyjsd0g5t4hdga16   （token，需要服务端客户端一致）<br>vhost_http_port = 5000          （服务端http端口）<br>vhost_https_port = 6000           （服务端https端口）</p><p>nohup ./frps  -c  ./frps.ini &amp;</p><p>编辑frpc.ini文件：</p><p>[common]<br>server_addr = nas.com      （这里填服务器端的IP或者域名）<br>server_port = 7000            （数据传输端口，需要服务端客户端一致）<br>auth_token = 2fd165jtyjsd0g5t4hdga16   （token，需要服务端客户端一致 ）<br>pool_count = 1<br>[httpname]<br>type = http<br>local_port = 5000          （本地群晖的网页端口）<br>custom_domains =  nas.com     （服务器端的域名）</p><p>./frpc  -c  ./frpc.ini</p><p>添加systemd配置文件：<br>vim /usr/lib/systemd/system/frps.service<br>文件内容如下：</p><p>[Unit]<br>Description=frpc service<br>After=network.target syslog.target<br>Wants=network.target</p><p>[Service]<br>Type=simple<br>#启动服务的命令（此处写你的frpc的实际安装目录）<br>ExecStart=/usr/local/frp/frp_0.35.1_linux_amd64/frps -c /usr/local/frp/frp_0.35.1_linux_amd64/frps.ini</p><p>[Install]<br>WantedBy=multi-user.target</p><p>ExecStart的内容请根据自己frp安装目录修改。</p><h1 id="启动frps"><a href="#启动frps" class="headerlink" title="启动frps"></a>启动frps</h1><p>sudo systemctl start frps </p><h1 id="打开自启动"><a href="#打开自启动" class="headerlink" title="打开自启动"></a>打开自启动</h1><p>sudo systemctl enable frps</p><h1 id="重启应用"><a href="#重启应用" class="headerlink" title="重启应用"></a>重启应用</h1><p>sudo systemctl restart frps</p><h1 id="停止应用"><a href="#停止应用" class="headerlink" title="停止应用"></a>停止应用</h1><p>sudo systemctl stop frps</p><h1 id="查看应用的日志"><a href="#查看应用的日志" class="headerlink" title="查看应用的日志"></a>查看应用的日志</h1><p>sudo systemctl status frps</p><h1 id="停止开机自启动"><a href="#停止开机自启动" class="headerlink" title="停止开机自启动"></a>停止开机自启动</h1><p>systemctl disable frps</p><p>frpc 客户端设置</p><p>添加systemd配置文件：<br>vim /usr/lib/systemd/system/frpc.service<br>文件内容如下：</p><p>[Unit]<br>Description=frpc service<br>After=network.target syslog.target<br>Wants=network.target</p><p>[Service]<br>Type=simple<br>#启动服务的命令（此处写你的frpc的实际安装目录）<br>ExecStart=/usr/local/frp/frp_0.35.1_linux_amd64/frpc -c /usr/local/frp/frp_0.35.1_linux_amd64/frpc.ini</p><p>[Install]<br>WantedBy=multi-user.target</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;p&gt;下载地址：&lt;br&gt;&lt;a href=&quot;https://github.com/fatedier/frp/releases&quot;&gt;https://github.com/fatedier/frp/releases&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;新建目录&lt;br&gt;mkdir -p /usr/loc</summary>
+      
+    
+    
+    
+    
+  </entry>
+  
+  <entry>
+    <title>Docker Install</title>
+    <link href="http://example.com/2021/01/24/Docker-Install/"/>
+    <id>http://example.com/2021/01/24/Docker-Install/</id>
+    <published>2021-01-24T07:28:50.000Z</published>
+    <updated>2022-08-12T16:48:07.151Z</updated>
+    
+    <content type="html"><![CDATA[<p><code>SHELL</code></p><p>docker run -d –name=jackett   -e PUID=1000   -e PGID=1000   -e TZ=Asia/Shanghai   -p 9117:9117   -v /usr/local/jackett/config:/config   –restart unless-stopped   linuxserver/jackett:latest</p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;p&gt;&lt;code&gt;SHELL&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;docker run -d –name=jackett   -e PUID=1000   -e PGID=1000   -e TZ=Asia/Shanghai   -p 9117:9117   -v /usr/local/</summary>
+      
+    
+    
+    
+    
+    <category term="Docker" scheme="http://example.com/tags/Docker/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>Hello World</title>
+    <link href="http://example.com/2021/01/24/hello-world/"/>
+    <id>http://example.com/2021/01/24/hello-world/</id>
+    <published>2021-01-24T04:00:35.783Z</published>
+    <updated>2021-01-24T04:00:35.783Z</updated>
+    
+    <content type="html"><![CDATA[<p>Welcome to <a href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p><h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/writing.html">Writing</a></p><h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/server.html">Server</a></p><h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/generating.html">Generating</a></p><h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure><p>More info: <a href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>]]></content>
+    
+    
+      
+      
+    <summary type="html">&lt;p&gt;Welcome to &lt;a href=&quot;https://hexo.io/&quot;&gt;Hexo&lt;/a&gt;! This is your very first post. Check &lt;a href=&quot;https://hexo.io/docs/&quot;&gt;documentation&lt;/a&gt; for</summary>
+      
+    
+    
+    
+    
+  </entry>
+  
+</feed>
